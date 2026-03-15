@@ -1,0 +1,111 @@
+.results-panel {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-xl);
+  min-height: 400px;
+}
+
+.results-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-surface-border);
+  overflow: hidden;
+}
+
+.results-card__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  background: rgba(10, 10, 20, 0.4);
+  border-bottom: 1px solid var(--color-surface-border);
+}
+
+.results-card__title {
+  font-size: 15px;
+  font-weight: 700;
+  flex: 1;
+}
+
+.results-card__content {
+  flex: 1;
+  padding: var(--space-lg);
+  overflow-y: auto;
+  position: relative;
+}
+
+.results-card__empty {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-style: italic;
+  font-size: 14px;
+}
+
+/* Articles */
+.article-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.article-item {
+  padding: var(--space-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-surface-border);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.article-item:hover {
+  border-color: var(--color-text-dim);
+}
+
+.article-item__source {
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.article-item__title {
+  font-size: 14px;
+  color: var(--color-text);
+  margin-bottom: 8px;
+  line-height: 1.3;
+  display: flex;
+  align-items: center;
+}
+
+.article-item__summary {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Email */
+.email-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  height: 100%;
+}
+
+.email-preview__actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: var(--space-md);
+  border-bottom: 1px dashed var(--color-surface-border);
+}
+
+.email-preview__text {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+  color: #c5c5d6;
+  white-space: pre-wrap;
+  margin: 0;
+  flex: 1;
+  overflow-y: auto;
+}

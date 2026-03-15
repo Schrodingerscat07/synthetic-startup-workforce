@@ -1,0 +1,25 @@
+.org-canvas {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background: var(--color-bg);
+}
+
+/* React Flow custom theme overrides */
+.flow-theme .react-flow__pane {
+  cursor: grab;
+}
+
+.flow-theme .react-flow__pane:active {
+  cursor: grabbing;
+}
+
+.flow-theme .react-flow__edge-path {
+  stroke-width: 2;
+  transition: all var(--transition-normal);
+}
+
+.flow-theme .react-flow__edge.selected .react-flow__edge-path {
+  stroke: var(--color-secondary);
+  stroke-width: 3;
+}
