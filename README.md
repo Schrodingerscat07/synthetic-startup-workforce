@@ -1,73 +1,264 @@
-# React + TypeScript + Vite
+<p align="center">
+  <span style="font-size: 48px">🧠</span>
+</p>
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+<h1 align="center">Cerebro AI</h1>
 
-Currently, two official plugins are available:
+<p align="center">
+  <strong>Startup-in-a-Box — Build, Staff & Run a Company with an AI Workforce</strong>
+</p>
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+<p align="center">
+  <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react" alt="React 19" />
+  <img src="https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Gemini_AI-2.0_Flash-4285F4?logo=google" alt="Gemini AI" />
+  <img src="https://img.shields.io/badge/Vite-8-646CFF?logo=vite" alt="Vite 8" />
+  <img src="https://img.shields.io/badge/license-Apache_2.0-green" alt="License" />
+</p>
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🎯 What is Cerebro AI?
 
-## Expanding the ESLint configuration
+Cerebro AI is a platform where solo entrepreneurs describe their startup idea to an AI Orchestrator, which then **provisions a synchronized workforce of AI agents** organized into a C-Suite hierarchy. The platform features strict **Human-in-the-Loop (HITL)** cybersecurity governance — nothing runs without the founder's explicit approval.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### The Flow
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+Describe Your Vision → AI Assembles Your Team → Review & Approve Org Chart → Agents Execute Autonomously
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+1. **Vision Chat** — You describe your startup idea in natural language
+2. **AI Orchestrator** — Gemini AI analyzes your vision and dynamically provisions the right team
+3. **HITL Security Gate** — Interactive org chart where you review permissions, tools, and reporting chains
+4. **Autonomous Execution** — Approved agents perform real work (research, email drafting, etc.)
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+---
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## ✨ Key Features
+
+| Feature | Description |
+|---|---|
+| 🤖 **LLM-Powered Orchestrator** | Gemini 2.0 Flash understands your actual vision and provisions agents dynamically — different input produces different teams |
+| 🔍 **Real Web Research** | The "Seeker" agent generates genuine industry research with data points, market analysis, and competitive intelligence |
+| ✉️ **AI Email Drafting** | The "Herald" agent crafts personalized executive intelligence briefs based on actual research — streamed in real-time |
+| 🛡️ **Human-in-the-Loop Security** | Interactive org chart where you review every agent's permissions before deployment. Nothing executes without your approval |
+| 📊 **Live Execution Dashboard** | Real-time activity feed showing agent status, execution logs, research results, and email previews |
+| 🎨 **Premium Dark UI** | Glassmorphism, neon accents, Framer Motion animations, and a futuristic design system |
+
+---
+
+## 🏗️ Architecture
+
 ```
+src/
+├── services/            # Core AI services (all powered by Gemini)
+│   ├── gemini.ts        # Gemini SDK client — text, streaming, and JSON generation
+│   ├── orchestrator.ts  # LLM-powered chat engine with dynamic agent provisioning
+│   ├── webResearcher.ts # AI-generated industry research and market intelligence
+│   └── emailDrafter.ts  # LLM-generated personalized email drafts (streaming)
+│
+├── stores/              # Zustand state management
+│   ├── chatStore.ts     # Chat messages, typing indicator, conversation phase
+│   ├── companyStore.ts  # Company info, agents array, approval status
+│   └── executionStore.ts # Execution logs, research articles, draft email
+│
+├── components/          # React components organized by feature
+│   ├── chat/            # ChatWindow, ChatMessage, ChatInput, AgentCard
+│   ├── org-chart/       # OrgCanvas (React Flow), AgentNode, ApprovalBar, NodeEditor
+│   └── dashboard/       # AgentStatusGrid, ActivityFeed, ResultsPanel
+│
+├── routes/              # Page-level components
+│   ├── ChatPage.tsx     # Vision chat interface with sidebar branding
+│   ├── OrgChartPage.tsx # HITL approval gate with interactive org chart
+│   └── DashboardPage.tsx # Live execution dashboard
+│
+├── data/                # Static data and templates
+│   └── agents.ts        # 7 pre-defined agent templates with permissions & tools
+│
+├── types/               # TypeScript type definitions
+│   └── index.ts         # Agent, Company, ChatMessage, ExecutionLog, etc.
+│
+├── App.tsx              # React Router (/, /org-chart, /dashboard)
+├── main.tsx             # App entry point
+└── index.css            # Full design system with CSS variables
+```
+
+---
+
+## 🤖 AI Agent Registry
+
+Cerebro provisions agents from a configurable registry. The LLM decides which agents to deploy based on your startup vision.
+
+| Agent | Name | Role | Tools | Reports To |
+|---|---|---|---|---|
+| 👔 Atlas | CEO | Chief Executive Officer | task-delegator, report-aggregator | — |
+| 💻 Nova | CTO | Chief Technology Officer | code-analyzer, api-connector, system-monitor | CEO |
+| 📊 Ledger | CFO | Chief Financial Officer | spreadsheet-engine, cost-tracker | CEO |
+| 📣 Pulse | CMO | Chief Marketing Officer | content-generator, analytics-reader | CEO |
+| ⚙️ Relay | COO | Chief Operations Officer | workflow-engine, task-scheduler | CEO |
+| 🔍 Seeker | Worker | Web Research Specialist | puppeteer-browser, web-scraper, data-formatter | CTO |
+| ✉️ Herald | Worker | Email Outreach Specialist | email-client, template-engine, personalization-engine | CMO |
+
+### Agent Hierarchy
+
+```
+Atlas (CEO)
+├── Nova (CTO)
+│   └── Seeker (Web Researcher)
+├── Ledger (CFO)
+├── Pulse (CMO)
+│   └── Herald (Email Outreach)
+└── Relay (COO)
+```
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- **Node.js** 18+ and **npm** 9+
+- A **Gemini API key** — get one free at [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
+
+### Installation
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/Schrodingerscat07/synthetic-startup-workforce.git
+cd synthetic-startup-workforce
+
+# 2. Install dependencies
+npm install
+
+# 3. Set up your API key
+cp .env.example .env
+# Edit .env and paste your Gemini API key:
+# VITE_GEMINI_API_KEY=your-key-here
+
+# 4. Start the development server
+npm run dev
+```
+
+Open [http://localhost:5173](http://localhost:5173) and describe your startup vision!
+
+---
+
+## 🔧 Configuration
+
+### Environment Variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `VITE_GEMINI_API_KEY` | ✅ | Your Google Gemini API key |
+
+### Available Scripts
+
+| Script | Command | Description |
+|---|---|---|
+| Dev Server | `npm run dev` | Start Vite dev server with HMR |
+| Build | `npm run build` | TypeScript check + production build |
+| Preview | `npm run preview` | Preview production build locally |
+| Lint | `npm run lint` | Run ESLint |
+
+---
+
+## 🛡️ Security Model (HITL)
+
+The Human-in-the-Loop checkpoint is the **core differentiator** of Cerebro AI:
+
+1. **Permission Granularity** — Each agent has explicit, enumerated permissions (read / write / execute)
+2. **Visual Audit** — The org chart provides an at-a-glance security review of the entire hierarchy
+3. **Approval Gate** — Nothing executes until the founder clicks "Approve & Deploy"
+4. **Warning System** — Color-coded badges highlight agents with high-risk `execute` permissions
+5. **Edit Before Deploy** — Modify permissions, remove tools, or delete agents before approval
+
+---
+
+## 🎨 Design System
+
+Cerebro uses a custom dark-mode design system built with CSS variables:
+
+| Token | Value | Usage |
+|---|---|---|
+| `--color-primary` | `#6C5CE7` (Electric Violet) | Primary actions, links |
+| `--color-secondary` | `#00D2FF` (Cyan Spark) | Secondary accents, badges |
+| `--color-accent` | `#FF6B6B` (Coral Alert) | Warnings, destructive actions |
+| `--color-bg` | `#0F0F1A` (Deep Space) | Page background |
+| `--color-surface` | `#1A1A2E` (Dark Panel) | Cards, panels |
+| `--color-success` | `#00E676` | Success states |
+| `--color-warning` | `#FFD93D` | Warning states |
+| `--color-error` | `#FF5252` | Error states |
+
+### Visual Features
+- **Glassmorphism** — `.glass` and `.glass-strong` utility classes
+- **Neon glow effects** — Animated glowing borders on active elements
+- **Framer Motion** — Smooth page transitions, staggered list animations, micro-interactions
+- **CSS Animations** — `fadeIn`, `slideUp`, `pulse`, `glow`, `float`, `border-glow`
+
+---
+
+## 🧰 Tech Stack
+
+| Technology | Version | Purpose |
+|---|---|---|
+| [React](https://react.dev) | 19 | UI framework |
+| [TypeScript](https://typescriptlang.org) | 5.9 | Type safety |
+| [Vite](https://vite.dev) | 8 | Build tool and dev server |
+| [Gemini AI](https://ai.google.dev) | 2.0 Flash | LLM for orchestrator, research, email |
+| [Zustand](https://zustand-demo.pmnd.rs) | 5 | Lightweight state management |
+| [React Flow](https://reactflow.dev) | 12 | Interactive org chart canvas |
+| [Framer Motion](https://motion.dev) | 12 | Declarative animations |
+| [Lucide React](https://lucide.dev) | Latest | Icon library |
+| [React Router](https://reactrouter.com) | 7 | Client-side routing |
+
+---
+
+## 📁 Application Routes
+
+| Route | Page | Description |
+|---|---|---|
+| `/` | Vision Chat | Founder describes their idea, Orchestrator provisions agents |
+| `/org-chart` | HITL Org Chart | React Flow canvas with interactive agent approval |
+| `/dashboard` | Execution Dashboard | Live agent status, research results, email preview |
+
+---
+
+## 🔮 How the AI Works
+
+### 1. Dynamic Orchestration
+When you type your startup vision, the Gemini orchestrator:
+- Understands your actual business idea (not scripted responses)
+- Decides which agents to provision using **JSON mode** structured output
+- Generates unique deployment narration for each agent
+- Creates a contextual celebration message
+
+### 2. Intelligent Research
+The Web Researcher agent:
+- Receives context about your company's vision
+- Uses Gemini to generate real industry research with specific data points
+- Produces 4-5 research findings with market sizes, growth rates, and trends
+- Results are tailored to your specific industry
+
+### 3. Personalized Email Drafting
+The Email Outreach agent:
+- Ingests the actual research findings
+- Uses Gemini **streaming** to draft a personalized executive brief
+- Email appears in real-time as it's being written
+- Content adapts to your company name, vision, and research results
+
+### Fallback Safety
+Every LLM call includes graceful fallback responses. If the Gemini API is unavailable or errors occur, the app continues working with sensible defaults.
+
+---
+
+## 📄 License
+
+This project is licensed under the Apache License 2.0 — see the [LICENSE](LICENSE) file for details.
+
+---
+
+<p align="center">
+  <strong>Built with 🧠 by Cerebro AI</strong><br/>
+  <em>Powered by Google Gemini</em>
+</p>
