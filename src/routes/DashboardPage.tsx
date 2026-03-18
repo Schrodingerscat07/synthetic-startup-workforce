@@ -3,8 +3,7 @@ import { motion } from 'framer-motion';
 import { Activity } from 'lucide-react';
 import { useCompanyStore } from '../stores/companyStore';
 import { useExecutionStore } from '../stores/executionStore';
-import { runWebResearcher } from '../services/webResearcher';
-import { runEmailOutreach } from '../services/emailDrafter';
+import { runAgentPipeline } from '../services/webResearcher';
 
 import AgentStatusGrid from '../components/dashboard/AgentStatusGrid';
 import ActivityFeed from '../components/dashboard/ActivityFeed';
@@ -15,30 +14,22 @@ export default function DashboardPage() {
   const { agents } = useCompanyStore();
   const { isRunning, setRunning } = useExecutionStore();
   
-  // Ref to ensure we only trigger the simulation once on mount
   const hasStarted = useRef(false);
 
   useEffect(() => {
     if (hasStarted.current || isRunning || agents.length === 0) return;
     hasStarted.current = true;
     
-    const runSimulation = async () => {
+    const runExecution = async () => {
       setRunning(true);
       
-      // 1. Find the agents
-      const researcher = agents.find(a => a.id === 'agent-web-researcher');
-      const emailer = agents.find(a => a.id === 'agent-email-outreach');
-      
-      if (researcher && emailer) {
-        // 2. Run the sequence
-        await runWebResearcher(researcher);
-        await runEmailOutreach(emailer);
-      }
+      // Run the real LangGraph agent pipeline via backend
+      await runAgentPipeline();
       
       setRunning(false);
     };
 
-    runSimulation();
+    runExecution();
   }, [agents, isRunning, setRunning]);
 
   return (
@@ -51,7 +42,7 @@ export default function DashboardPage() {
         <div className="dashboard-page__status">
           <span className={`status-dot ${isRunning ? 'status-dot--running' : 'status-dot--completed'}`} />
           <span className="mono">
-            SYSTEM STATUS: {isRunning ? 'EXECUTING WORKFLOW' : 'OPERATIONS COMPLETED'}
+            SYSTEM STATUS: {isRunning ? 'EXECUTING AGENT PIPELINE' : 'OPERATIONS COMPLETED'}
           </span>
         </div>
       </header>

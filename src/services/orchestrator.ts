@@ -1,90 +1,21 @@
 /**
- * LLM-Powered Orchestrator Service
+ * Orchestrator Service — Backend-Connected
  *
- * Replaces the hardcoded scripted responses with real Gemini-powered conversation.
- * The orchestrator understands the user's actual startup vision and dynamically
- * provisions relevant agents.
+ * All LLM calls now go through the Python backend API.
+ * No more direct Gemini SDK calls from the frontend.
  */
 
 import { useChatStore } from '../stores/chatStore';
 import { useCompanyStore } from '../stores/companyStore';
-import { generateTextStream, generateJSON } from './gemini';
-import { getAgentTemplate } from '../data/agents';
+import { apiWelcome, apiProvision, apiChatMessage } from './api';
 import type { ChatMessage, Agent } from '../types';
 
 let messageCounter = 0;
+const COMPANY_ID = 'default-company'; // Single-company mode for now
 
 function generateId(): string {
   return `msg-${Date.now()}-${messageCounter++}`;
 }
-
-// ──────────────────────────────────────────────
-// System Prompts
-// ──────────────────────────────────────────────
-
-const ORCHESTRATOR_SYSTEM_PROMPT = `You are "The Orchestrator" — the AI chief-of-staff for Cerebro AI, a platform that assembles AI agent workforces for entrepreneurs.
-
-Your personality:
-- Professional yet warm and encouraging
-- Confidently knowledgeable about AI agents and business operations
-- You use bold markdown for emphasis and occasional emojis for key moments
-- Keep responses concise (2-4 sentences max per message)
-
-Your current task: Welcome the user and understand their startup vision.
-
-IMPORTANT RULES:
-- Do NOT list agents or propose a team in this response
-- Simply acknowledge their vision with genuine enthusiasm
-- Mention that you'll now assemble their AI workforce
-- End by saying you're starting the provisioning sequence
-- Use markdown formatting (bold, italic) for emphasis`;
-
-const AGENT_PROVISIONER_PROMPT = `You are an AI team architect. Given a startup vision, you must decide which AI agents to provision for this company.
-
-You MUST return a JSON object with this exact structure:
-{
-  "companyName": "A short, catchy company name based on the vision",
-  "analysis": "One sentence explaining why you chose these agents",
-  "agents": ["ceo", "cto", "cfo", "cmo", "coo", "webResearcher", "emailOutreach"]
-}
-
-Rules:
-- ALWAYS include "ceo" — every company needs a CEO
-- ALWAYS include at least 4 agents
-- Available agent keys: "ceo", "cto", "cfo", "cmo", "coo", "webResearcher", "emailOutreach"
-- Only use keys from the list above, no custom agents
-- For a research/lead-gen business, include webResearcher and emailOutreach
-- For a tech-focused business, include cto
-- For a marketing-focused business, include cmo and emailOutreach
-- Order them logically: executives first, then workers`;
-
-const PROVISION_NARRATION_PROMPT = `You are "The Orchestrator" narrating the deployment of an AI agent.
-
-You receive the agent's name, title, role, and description. Write a SHORT (1 sentence) exciting deployment message.
-
-Rules:
-- Use bold markdown for the agent's title
-- Sound professional and confident
-- Keep it under 30 words
-- Don't use emojis except occasionally
-- Vary your phrasing — don't start every message the same way`;
-
-const READY_MESSAGE_PROMPT = `You are "The Orchestrator" for Cerebro AI. The full AI workforce has just been assembled.
-
-Write a short celebration message (3-4 sentences) that:
-- Celebrates the team being ready (use 🎉 emoji once)
-- Mentions the total number of agents: {agentCount}
-- Tells the user they must review the org chart (the Human-in-the-Loop security checkpoint)
-- Emphasizes that nothing runs without their explicit approval
-- Uses bold markdown for emphasis`;
-
-const RECONFIGURATION_PROMPT = `You are "The Orchestrator" for Cerebro AI. The user wants changes to their AI agent team.
-
-Respond briefly (1-2 sentences) acknowledging their feedback and confirming you've updated the team. Sound helpful and cooperative. Use markdown bold for emphasis.`;
-
-// ──────────────────────────────────────────────
-// Helper: add a message to the store
-// ──────────────────────────────────────────────
 
 function addOrchestratorMessage(content: string, type: ChatMessage['type'] = 'text', agent?: Agent) {
   useChatStore.getState().addMessage({
@@ -111,32 +42,49 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// ──────────────────────────────────────────────
-// Public API
-// ──────────────────────────────────────────────
+/** Convert backend agent data to frontend Agent type */
+function toFrontendAgent(a: {
+  id: string; name: string; role: string; title: string; avatar: string;
+  status: string; permissions: { id: string; name: string; level: string; approved: boolean }[];
+  tools: string[]; reports_to: string | null; description: string;
+}): Agent {
+  return {
+    id: a.id,
+    name: a.name,
+    role: a.role as Agent['role'],
+    title: a.title,
+    avatar: a.avatar,
+    status: a.status as Agent['status'],
+    permissions: a.permissions.map(p => ({
+      id: p.id,
+      name: p.name,
+      level: p.level as 'read' | 'write' | 'execute',
+      approved: p.approved,
+    })),
+    tools: a.tools,
+    reportsTo: a.reports_to,
+    description: a.description,
+  };
+}
+
+export function getCompanyId(): string {
+  return COMPANY_ID;
+}
 
 export async function initializeChat(): Promise<void> {
   const chatStore = useChatStore.getState();
   chatStore.setTyping(true);
 
   try {
-    let welcomeText = '';
-    await generateTextStream(
-      ORCHESTRATOR_SYSTEM_PROMPT,
-      'The user just opened Cerebro AI for the first time. Write a welcome message introducing yourself and asking them to describe their startup vision.',
-      (_chunk, accumulated) => {
-        welcomeText = accumulated;
-      },
-    );
-
+    const response = await apiWelcome();
     chatStore.setTyping(false);
-    addOrchestratorMessage(welcomeText);
+    addOrchestratorMessage(response.content);
   } catch (error) {
     chatStore.setTyping(false);
-    console.error('Orchestrator init error:', error);
-    // Fallback message if Gemini is unavailable
+    console.error('Welcome error:', error);
+    chatStore.setError('Failed to connect to backend. Is the server running?');
     addOrchestratorMessage(
-      "Welcome to **Cerebro AI** 🧠\n\nI'm **The Orchestrator** — your AI chief of staff. I'm here to help you build, staff, and deploy an entire AI-powered company.\n\nTell me about your startup vision, and I'll assemble the perfect team to make it happen."
+      "Welcome to **Cerebro AI** 🧠\n\nI'm **The Orchestrator** — your AI chief of staff. Tell me about your startup vision, and I'll assemble the perfect team.\n\n⚠️ *Note: Backend connection failed. Please ensure the server is running.*"
     );
   }
 }
@@ -154,150 +102,79 @@ export async function processUserVision(userInput: string): Promise<void> {
     type: 'text',
   });
   chatStore.setUserHasSubmitted(true);
-
-  // 2. Generate vision acknowledgement via LLM
   chatStore.setTyping(true);
-  try {
-    let ackText = '';
-    await generateTextStream(
-      ORCHESTRATOR_SYSTEM_PROMPT,
-      `The user just described their startup vision: "${userInput}"\n\nAcknowledge their vision with genuine enthusiasm. Mention you'll now assemble their AI workforce. Keep it to 2-3 sentences.`,
-      (_chunk, accumulated) => {
-        ackText = accumulated;
-      },
-    );
-    chatStore.setTyping(false);
-    addOrchestratorMessage(ackText);
-  } catch {
-    chatStore.setTyping(false);
-    addOrchestratorMessage(
-      `Excellent vision! I can see the potential here. Let me assemble the perfect AI workforce to bring this to life.\n\n*Initializing provisioning sequence...*`
-    );
-  }
-
-  await delay(600);
-
-  // 3. Use LLM to decide which agents to provision
-  let agentKeys: string[] = ['ceo', 'cto', 'cfo', 'cmo', 'coo', 'webResearcher', 'emailOutreach'];
-  let companyName = 'AI Startup';
 
   try {
-    const result = await generateJSON<{
-      companyName: string;
-      analysis: string;
-      agents: string[];
-    }>(
-      AGENT_PROVISIONER_PROMPT,
-      `Startup vision: "${userInput}"`,
-    );
+    // 2. Call backend provision endpoint (does all LLM work server-side)
+    const result = await apiProvision(COMPANY_ID, userInput);
 
-    if (result.agents && result.agents.length >= 4) {
-      agentKeys = result.agents;
-    }
-    if (result.companyName) {
-      companyName = result.companyName;
-    }
-  } catch {
-    // Fallback to defaults
-  }
+    chatStore.setTyping(false);
 
-  companyStore.setCompanyVision(userInput);
-  companyStore.setCompanyName(companyName);
-
-  // 4. Separate executives from workers
-  const executiveKeys = agentKeys.filter(k => ['ceo', 'cto', 'cfo', 'cmo', 'coo'].includes(k));
-  const workerKeys = agentKeys.filter(k => !['ceo', 'cto', 'cfo', 'cmo', 'coo'].includes(k));
-
-  // 5. Provision C-Suite
-  chatStore.setPhase('provisioning-csuite');
-  addSystemMessage('🚀 **Provisioning Executive Team**');
-  await delay(500);
-
-  for (const key of executiveKeys) {
-    const agent = getAgentTemplate(key);
-    if (!agent) continue;
-
-    // Generate narration via LLM
-    chatStore.setTyping(true);
-    try {
-      let narration = '';
-      await generateTextStream(
-        PROVISION_NARRATION_PROMPT,
-        `Agent being deployed: ${agent.name} — ${agent.title}. Description: ${agent.description}`,
-        (_chunk, accumulated) => {
-          narration = accumulated;
-        },
-      );
-      chatStore.setTyping(false);
-      addOrchestratorMessage(narration);
-    } catch {
-      chatStore.setTyping(false);
-      addOrchestratorMessage(`Deploying your **${agent.title}**...`);
-    }
-
+    // 3. Display vision acknowledgement (first narration)
+    addOrchestratorMessage(result.narrations[0]);
     await delay(400);
 
-    // Add the agent card
-    companyStore.addAgent(agent);
-    addOrchestratorMessage('', 'agent-card', agent);
-    await delay(300);
-  }
+    // 4. Set company info
+    companyStore.setCompanyVision(userInput);
+    companyStore.setCompanyName(result.company_name);
 
-  // 6. Provision Workers
-  if (workerKeys.length > 0) {
-    chatStore.setPhase('provisioning-workers');
-    addSystemMessage('🔧 **Provisioning Specialist Workers**');
-    await delay(500);
+    // 5. Provision C-Suite
+    chatStore.setPhase('provisioning-csuite');
+    addSystemMessage('🚀 **Provisioning Executive Team**');
+    await delay(400);
 
-    for (const key of workerKeys) {
-      const agent = getAgentTemplate(key);
-      if (!agent) continue;
+    const executives = result.agents.filter(a =>
+      ['ceo', 'cto', 'cfo', 'cmo', 'coo'].includes(a.role)
+    );
+    const workers = result.agents.filter(a =>
+      !['ceo', 'cto', 'cfo', 'cmo', 'coo'].includes(a.role)
+    );
 
-      chatStore.setTyping(true);
-      try {
-        let narration = '';
-        await generateTextStream(
-          PROVISION_NARRATION_PROMPT,
-          `Worker being deployed: ${agent.name} — ${agent.title}. Description: ${agent.description}. This agent has specialized tools: ${agent.tools.join(', ')}`,
-          (_chunk, accumulated) => {
-            narration = accumulated;
-          },
-        );
-        chatStore.setTyping(false);
-        addOrchestratorMessage(narration);
-      } catch {
-        chatStore.setTyping(false);
-        addOrchestratorMessage(`Deploying your **${agent.title}**...`);
+    // Narrations start at index 1 (index 0 is vision ack)
+    let narrationIdx = 1;
+
+    for (const agentData of executives) {
+      const agent = toFrontendAgent(agentData);
+      if (result.narrations[narrationIdx]) {
+        addOrchestratorMessage(result.narrations[narrationIdx]);
       }
-
-      await delay(400);
+      narrationIdx++;
+      await delay(300);
       companyStore.addAgent(agent);
       addOrchestratorMessage('', 'agent-card', agent);
-      await delay(300);
+      await delay(200);
     }
-  }
 
-  // 7. Ready message
-  chatStore.setPhase('ready');
-  chatStore.setTyping(true);
-  const totalAgents = useCompanyStore.getState().agents.length;
+    // 6. Provision Workers
+    if (workers.length > 0) {
+      chatStore.setPhase('provisioning-workers');
+      addSystemMessage('🔧 **Provisioning Specialist Workers**');
+      await delay(400);
 
-  try {
-    let readyText = '';
-    await generateTextStream(
-      READY_MESSAGE_PROMPT.replace('{agentCount}', String(totalAgents)),
-      `The workforce of ${totalAgents} agents has been assembled for a company called "${companyName}". Write the celebration message.`,
-      (_chunk, accumulated) => {
-        readyText = accumulated;
-      },
-    );
+      for (const agentData of workers) {
+        const agent = toFrontendAgent(agentData);
+        if (result.narrations[narrationIdx]) {
+          addOrchestratorMessage(result.narrations[narrationIdx]);
+        }
+        narrationIdx++;
+        await delay(300);
+        companyStore.addAgent(agent);
+        addOrchestratorMessage('', 'agent-card', agent);
+        await delay(200);
+      }
+    }
+
+    // 7. Ready message
+    chatStore.setPhase('ready');
+    await delay(300);
+    addOrchestratorMessage(result.ready_message, 'transition');
+
+  } catch (error) {
     chatStore.setTyping(false);
-    addOrchestratorMessage(readyText, 'transition');
-  } catch {
-    chatStore.setTyping(false);
+    console.error('Provision error:', error);
+    chatStore.setError('Failed to provision agents. Check backend connection.');
     addOrchestratorMessage(
-      `🎉 **Your AI workforce is assembled!**\n\nYou now have a full team of **${totalAgents} AI agents** ready to operate ${companyName}. But before they go live, you need to review and approve their organizational hierarchy.\n\nThis is your **Human-in-the-Loop security checkpoint** — nothing runs without your explicit approval.`,
-      'transition'
+      '❌ **Error**: Could not connect to the backend server. Please ensure it\'s running:\n\n```\ncd backend && uvicorn app.main:app --reload\n```'
     );
   }
 }
@@ -305,7 +182,6 @@ export async function processUserVision(userInput: string): Promise<void> {
 export async function processReconfiguration(userInput: string): Promise<void> {
   const chatStore = useChatStore.getState();
 
-  // Add user message
   chatStore.addMessage({
     id: generateId(),
     role: 'user',
@@ -313,26 +189,16 @@ export async function processReconfiguration(userInput: string): Promise<void> {
     timestamp: new Date(),
     type: 'text',
   });
-
   chatStore.setUserHasSubmitted(true);
   chatStore.setTyping(true);
 
   try {
-    let responseText = '';
-    await generateTextStream(
-      RECONFIGURATION_PROMPT,
-      `The user says: "${userInput}"`,
-      (_chunk, accumulated) => {
-        responseText = accumulated;
-      },
-    );
+    const response = await apiChatMessage(COMPANY_ID, userInput);
     chatStore.setTyping(false);
-    addOrchestratorMessage(responseText);
+    addOrchestratorMessage(response.content);
   } catch {
     chatStore.setTyping(false);
-    addOrchestratorMessage(
-      "Understood. I've updated the agents' permissions and toolsets based on your feedback. Please review the team again."
-    );
+    addOrchestratorMessage("Understood. I've updated the team based on your feedback. Please review again.");
   }
 
   await delay(500);
