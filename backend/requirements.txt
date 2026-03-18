@@ -1,0 +1,12 @@
+fastapi[standard]
+uvicorn[standard]
+langchain-google-genai
+langgraph
+langchain-core
+googlesearch-python
+beautifulsoup4
+httpx
+sqlalchemy
+python-dotenv
+pydantic-settings
+sse-starlette
