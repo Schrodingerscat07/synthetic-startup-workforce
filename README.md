@@ -11,6 +11,9 @@
 <p align="center">
   <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react" alt="React 19" />
   <img src="https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Python-3.11-3776AB?logo=python" alt="Python 3.11" />
+  <img src="https://img.shields.io/badge/FastAPI-0.109-009688?logo=fastapi" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/LangGraph-0.0.26-FF4F00?logo=langchain" alt="LangGraph" />
   <img src="https://img.shields.io/badge/Gemini_AI-2.0_Flash-4285F4?logo=google" alt="Gemini AI" />
   <img src="https://img.shields.io/badge/Vite-8-646CFF?logo=vite" alt="Vite 8" />
   <img src="https://img.shields.io/badge/license-Apache_2.0-green" alt="License" />
@@ -51,37 +54,27 @@ Describe Your Vision → AI Assembles Your Team → Review & Approve Org Chart �
 ## 🏗️ Architecture
 
 ```
-src/
-├── services/            # Core AI services (all powered by Gemini)
-│   ├── gemini.ts        # Gemini SDK client — text, streaming, and JSON generation
-│   ├── orchestrator.ts  # LLM-powered chat engine with dynamic agent provisioning
-│   ├── webResearcher.ts # AI-generated industry research and market intelligence
-│   └── emailDrafter.ts  # LLM-generated personalized email drafts (streaming)
+synthetic-startup-workforce/
+├── backend/             # Python FastAPI backend
+│   ├── app/
+│   │   ├── routers/     # API endpoints (chat, company, execution)
+│   │   ├── services/    # Core business logic
+│   │   │   ├── agent_graph.py   # LangGraph agent workflows
+│   │   │   └── orchestrator.py  # LLM interactions and team building
+│   │   ├── tools/       # Langchain tools (scraper, search, email_writer)
+│   │   ├── models.py    # SQLAlchemy database models
+│   │   └── database.py  # SQLite/PostgreSQL connection setup
+│   └── requirements.txt # Python dependencies
 │
-├── stores/              # Zustand state management
-│   ├── chatStore.ts     # Chat messages, typing indicator, conversation phase
-│   ├── companyStore.ts  # Company info, agents array, approval status
-│   └── executionStore.ts # Execution logs, research articles, draft email
-│
-├── components/          # React components organized by feature
-│   ├── chat/            # ChatWindow, ChatMessage, ChatInput, AgentCard
-│   ├── org-chart/       # OrgCanvas (React Flow), AgentNode, ApprovalBar, NodeEditor
-│   └── dashboard/       # AgentStatusGrid, ActivityFeed, ResultsPanel
-│
-├── routes/              # Page-level components
-│   ├── ChatPage.tsx     # Vision chat interface with sidebar branding
-│   ├── OrgChartPage.tsx # HITL approval gate with interactive org chart
-│   └── DashboardPage.tsx # Live execution dashboard
-│
-├── data/                # Static data and templates
-│   └── agents.ts        # 7 pre-defined agent templates with permissions & tools
-│
-├── types/               # TypeScript type definitions
-│   └── index.ts         # Agent, Company, ChatMessage, ExecutionLog, etc.
-│
-├── App.tsx              # React Router (/, /org-chart, /dashboard)
-├── main.tsx             # App entry point
-└── index.css            # Full design system with CSS variables
+├── src/                 # React Frontend
+│   ├── services/        # API client integration
+│   ├── stores/          # Zustand state management
+│   ├── components/      # React components (chat, org-chart, dashboard)
+│   ├── routes/          # Page-level components
+│   ├── data/            # Static data and templates
+│   ├── types/           # TypeScript interfaces
+│   └── App.tsx          # React Router configuration
+└── index.html
 ```
 
 ---
@@ -119,6 +112,7 @@ Atlas (CEO)
 ### Prerequisites
 
 - **Node.js** 18+ and **npm** 9+
+- **Python** 3.10+
 - A **Gemini API key** — get one free at [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
 
 ### Installation
@@ -128,15 +122,25 @@ Atlas (CEO)
 git clone https://github.com/Schrodingerscat07/synthetic-startup-workforce.git
 cd synthetic-startup-workforce
 
-# 2. Install dependencies
+# 2. Set up the Frontend
 npm install
+cp .env.example .env # Add your VITE_API_URL here (defaults to http://localhost:8000)
 
-# 3. Set up your API key
-cp .env.example .env
-# Edit .env and paste your Gemini API key:
-# VITE_GEMINI_API_KEY=your-key-here
+# 3. Set up the Backend
+cd backend
+python -m venv venv
+# On Windows: venv\\Scripts\\activate
+# On Mac/Linux: source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env # Add your GEMINI_API_KEY here
 
-# 4. Start the development server
+# 4. Run the components
+# In terminal 1 (Backend):
+cd backend
+uvicorn app.main:app --reload
+
+# In terminal 2 (Frontend):
+cd ..
 npm run dev
 ```
 
@@ -204,6 +208,9 @@ Cerebro uses a custom dark-mode design system built with CSS variables:
 |---|---|---|
 | [React](https://react.dev) | 19 | UI framework |
 | [TypeScript](https://typescriptlang.org) | 5.9 | Type safety |
+| [FastAPI](https://fastapi.tiangolo.com/) | 0.109 | High-performance Python backend API |
+| [LangGraph](https://python.langchain.com/docs/langgraph) | 0.0.26 | Agentic workflow orchestration |
+| [SQLAlchemy](https://www.sqlalchemy.org/) | 2.0 | Database ORM |
 | [Vite](https://vite.dev) | 8 | Build tool and dev server |
 | [Gemini AI](https://ai.google.dev) | 2.0 Flash | LLM for orchestrator, research, email |
 | [Zustand](https://zustand-demo.pmnd.rs) | 5 | Lightweight state management |
